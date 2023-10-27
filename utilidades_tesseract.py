@@ -2,8 +2,11 @@ import pytesseract
 import fitz
 import time
 from PIL import Image
-pytesseract.pytesseract.tesseract_cmd = r'F:\Program Files\Tesseract-OCR\tesseract.exe'
+import os
 
+
+if os.name == 'nt':  # Windows
+    pytesseract.pytesseract.tesseract_cmd = r'F:\Program Files\Tesseract-OCR\tesseract.exe'
 
 
 

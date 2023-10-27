@@ -1,6 +1,7 @@
 import streamlit as st
 from utilidades_tesseract import *
 
+
 st.title("LEITOR DE PDF")
 
 st.markdown("""<br><br> """, unsafe_allow_html=True)
