@@ -393,7 +393,7 @@ class Processo:
         for pattern in patterns:
             match = re.search(pattern, self.texto, re.IGNORECASE)
             if match:
-                print(f"033[92mSucesso033[0m: Queixa Crime | REGEX")
+                print(f"\033[92mSucesso\033[0m: Queixa Crime | REGEX")
                 self.queixa_crime = True  # Armazena o resultado da verificação
                 return  # Se uma correspondência foi encontrada, saímos da função
         # Se nenhuma correspondência foi encontrada para nenhum dos padrões, imprimimos uma mensagem e continuamos com método spacy
@@ -783,7 +783,7 @@ class Processo:
             maior_nome = 0
             for match_id, start, end in matches:
                 span = doc[start:end]
-                print("Imprimindo span: ", span.text)
+                # print("Imprimindo span: ", span.text)
 
                 if len(span.text) > maior_nome:
                     maior_nome = len(span.text)

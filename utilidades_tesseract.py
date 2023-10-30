@@ -36,7 +36,7 @@ def extrai_texto(pdf_content):
 
     text = ' '.join(extract).replace('\n', " ")
     duration = time.time() - start
-    print(f'Duração do método extrair texto: {duration}')
-    print(text)
+    # print(f'Duração do método extrair texto: {duration}')
+    # print(text)
 
     return text
