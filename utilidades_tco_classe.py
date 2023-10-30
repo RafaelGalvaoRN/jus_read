@@ -88,17 +88,16 @@ class Processo:
         ents = list(doc.ents)
 
         for ent in ents:
-            match ent.label_:
-                case "PER":
-                    pessoas.append(ent.text)  # you probably want to append entity text, not label
-                case "MISC":
-                    miscelaneo.append(ent.text)
-                case "ORG":
-                    organizacao.append(ent.text)
-                case "LOC":
-                    localidade.append(ent.text)
-                case _:
-                    continue  # ignore other labels
+            if ent.label_ == "PER":
+                pessoas.append(ent.text)
+            elif ent.label_ == "MISC":
+                miscelaneo.append(ent.text)
+            elif ent.label_ == "ORG":
+                organizacao.append(ent.text)
+            elif ent.label_ == "LOC":
+                localidade.append(ent.text)
+            else:
+                continue  # ignore other labels
 
         self.per = set(pessoas)
         self.misc = set(miscelaneo)
