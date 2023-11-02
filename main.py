@@ -17,7 +17,7 @@ with tab1:
 with tab2:
     leitor_imagem()
 #
-# with tab3:
-#     leitor_tco()
+with tab3:
+    leitor_tco()
 
 
