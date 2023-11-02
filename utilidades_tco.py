@@ -19,6 +19,7 @@ def leitor_tco():
 
         # Chama a função para extrair texto do PDF
         text = extrai_texto(pdf_content)
+        print(text)
 
         tco = Processo(text)
 

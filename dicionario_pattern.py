@@ -12,6 +12,9 @@ DICT_PATTERN_REGEX = {
     "numero_processo": [r"\d{7}-\d{2}\.\d{4}\.\d{1}\.\d{2}\.\d{4}"],
 
     "nome_autor_fato": [r"(?:\s?autor:?\s?)(\D+?)(?:infra..o penal)",
+                        r"autor\s{1,3}do\s{1,3}fato:?\s{1,3}(.{1,50})v.tima",
+                        r"autores[\D]]\s+(.+?),\sCPF:?",
+                        r"lavrado em desfavor de (.{5,50}), pela pr.tica"
                         ],
 
     "infracao_penal": [
@@ -26,10 +29,27 @@ DICT_PATTERN_REGEX = {
         r"(?<=il.cito PENAL)(.{1,50})\.",
         r"(?<=enquadramentos legais )(.{1,50})(?=hist.rico da)",
         r"(?<=infra..o penal:)(.{0,50})(?=v.tima)",
-        "(?<=infra..o penal)(.{0,50})(?=v.tima)"
+        "(?<=infra..o penal)(.{0,50})(?=v.tima)",
+        r"infra..es pena.{1,5}:?\s(.{1,50})v.tima",
+        r"infra..o\spenal:(.{1,100}?)autua",
+        r"infra..o\spenal:(.{1,50}?)testemunha"
+
     ],
+    # "infracao_penal": [r"(?<=infra..o penal\(.?es\)?):?(.{1,100})(?=AUTUA..O|autorizando|testemunha\(s\)|infratora?:?|autor? do fato:?)",
+    #                    r"(?<=il.cito penal):?(.{1,100})(?=AUTUA..O|infratora?:?|autor? do fato:?)",
+    #                    r"(?<=enquadramento legal):?(.{1,100})(?=relato\b)"],
+
+    # "crimes": [
+    #     r"(Art\.?\s*\d+\s*.*?\sdo\sCPB?)",
+    #     r"art\..{2,20}?(CPB|\d{4}\/\d{2})",
+    #     r'art\.\s*.{2,20}?(CPB|\d{4}\/\d{2})',
+    #     r"Art\.\s*\d{2,20},\s*CP",
+    #     r"art\..{2,20}?\d{1,2}\.\d{3}\/\d{2,4}"
+    # ],
+
     "crimes": [
-        r"(Art\.?\s*\d+\s*.*?\sdo\sCPB?)"
+        r"(art?\d{1,10}CPB?)",
+        r"(art.{1,10}\d{6,12})"
     ],
 
     "retratacao": [r"se retrata em representar em face do autor do fato",
@@ -50,7 +70,10 @@ DICT_PATTERN_REGEX = {
 
     "data_crime": [r"DATA:\s*(\d{2}/\d{2}/\d{4})(?:\s*HORA:\s*\d{2}:\d{2})?\s*LOCAL",
                    r"(?<=data do fato):?\s?(\d{2}/\d{2}/\d{4})\s?(?=hora\b)",
-                   r"(?<=data\/hora fim):? (\d{2}/\d{2}/\d{4}).+(?=Delegado\b)"],
+                   r"(?<=data\/hora fim):? (\d{2}/\d{2}/\d{4}).+(?=Delegado\b)",
+                   r"do\s?fato.+?data:\s(\d{2}\/\d{2}\/\d{2,4}).{1,4}hora",
+                   r"dofato .+?data:?\s+?(\d{8})\shora",
+                   r"do fato data: (\d{8}) hora:"],
 
     "certidao_positiva": [
         r"certid.o.n..(.+?) Certifico que, pesquisando(.+?) Rio Grande do Norte, ((?!NADA).)*CONSTAR as? distribui.."],

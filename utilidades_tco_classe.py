@@ -9,17 +9,19 @@ from dateutil.relativedelta import relativedelta
 from dicionario_pattern import DICT_PATTERN_REGEX, DICT_PATTERN_SPACY
 import pandas as pd
 from threading import Thread
+from sanitization.sanitiza import satitization_crime,sanitiza_crime2,  sanitiza_autor, sanitiza_data, sanitiza_data_8_digitos
+from dic_natureza_acao import crime_dict_cp
 
 
 def timer_decorator(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
-        print(f"Início da execução do método {func.__name__}.")  # imprime a mensagem de início
+        # print(f"Início da execução do método {func.__name__}.")  # imprime a mensagem de início
         start_time = time.time()  # inicia o contador de tempo
         result = func(*args, **kwargs)  # chama a função original
         end_time = time.time()  # termina o contador de tempo
         execution_time = end_time - start_time  # calcula o tempo de execução
-        print(f"Fim da execução do método {func.__name__}")
+        # print(f"Fim da execução do método {func.__name__}")
         print(f"Tempo de execução de {func.__name__}: {execution_time} segundos")
         return result
 
@@ -50,6 +52,7 @@ class Processo:
         self.prazo_decadencial = None
         self.procuracao = None
 
+    # @timer_decorator
     def verifica_decadencia_seis_meses(self, data):
         data = data.strip()
 
@@ -78,6 +81,7 @@ class Processo:
         else:
             self.prazo_decadencial = False
 
+    # @timer_decorator
     def get_ner(self):
         pessoas = []
         miscelaneo = []
@@ -156,21 +160,10 @@ class Processo:
         print('Falhou: Transação | Spacy')
         self.proposta_transacao = False
 
-    def separar_crimes(self, crime_str):
-        # Procura por 'Art' seguido de números e possivelmente outros caracteres
-        pattern = r'(?=Art\. \d+)'
-
-        # Usa o padrão detectado para dividir a string em crimes individuais
-        crimes = re.split(pattern, crime_str)
-
-        # Limpa cada crime
-        crimes = [crime.strip() for crime in crimes if crime]
-
-        return crimes
-
+    # @timer_decorator
     def split_string_based_on_keywords(self, text):
         # Lista de palavras-chave para divisão
-        keywords = ['Art', ';', 'Lei']
+        keywords = ['Art', ';', "-"]
 
         # Criamos um padrão regex que procura qualquer uma das palavras-chave
         pattern = '|'.join(map(re.escape, keywords))
@@ -181,68 +174,104 @@ class Processo:
 
         return splits
 
+
     # @timer_decorator
+    # def verifica_infracao_penal_regex(self):
+    #     patterns = DICT_PATTERN_REGEX["infracao_penal"]
+    #     srings_crimes = []
+    #
+    #     for pattern in patterns:
+    #         match = re.search(pattern, self.texto, re.IGNORECASE)
+    #
+    #         if match:
+    #             print("Match:", match, ";", match.group(0))
+    #
+    #             result = match.group(0).strip()
+    #             if result:
+    #                 srings_crimes.append(result)
+    #
+    #     string_crimes_nova = []
+    #     for s in srings_crimes:
+    #
+    #         string_crimes_nova.extend(self.split_string_based_on_keywords(s))
+    #
+    #     print('Aqui na string_nova: ', string_crimes_nova)
+    #     crimes_encontrados=[]
+    #
+    #     string_crimes_nova_sanitizada = list(set(map(satitization_crime, string_crimes_nova)))
+    #
+    #     print('Aqui na string nova sanitizada', string_crimes_nova_sanitizada)
+    #
+    #     patterns = DICT_PATTERN_REGEX["crimes"]
+    #     for pattern in patterns:
+    #         for item in string_crimes_nova_sanitizada:
+    #             # print("Analisando trecho:", item)
+    #             match = re.findall(pattern, item, re.IGNORECASE)
+    #
+    #             print("Encontrei os trechos:", match, "com o pattern", pattern)
+    #
+    #             if match:
+    #                 result = [x.strip() for x in match]
+    #                 # print("Adicionando o seguinte result no listao:", result)
+    #
+    #                 crimes_encontrados.extend(result)
+    #
+    #     # Aplica a função de sanitização e converte o resultado para uma lista
+    #     crimes_sanitizados = list(set(map(satitization_crime, crimes_encontrados)))
+    #
+    #
+    #     # Armazena o resultado da verificação
+    #     self.infracao_penal = crimes_sanitizados
+    #
+    #     if not crimes_encontrados:
+    #         # Se nenhuma correspondência foi encontrada para nenhum dos padrões, imprimimos uma mensagem
+    #         print("Falhou: Infração Penal | Regex")
+
     def verifica_infracao_penal_regex(self):
         patterns = DICT_PATTERN_REGEX["infracao_penal"]
         srings_crimes = []
 
         for pattern in patterns:
             match = re.search(pattern, self.texto, re.IGNORECASE)
-            # print('aqui aqui', match)
+
+            print(f"imprimindo match: {match} para o pattern: {pattern}")
+
             if match:
+                print("Match:", match, ";", match.group(0))
+
                 result = match.group(0).strip()
                 if result:
                     srings_crimes.append(result)
+
+
 
         string_crimes_nova = []
         for s in srings_crimes:
             string_crimes_nova.extend(self.split_string_based_on_keywords(s))
 
-        patterns = DICT_PATTERN_REGEX["crimes"]
-        crimes_encontrados=[]
+        print('Aqui na string_nova: ', string_crimes_nova)
+        crimes_encontrados = []
 
+        string_crimes_nova_sanitizada = list(set(map(sanitiza_crime2, string_crimes_nova)))
+
+        print('Aqui na string nova sanitizada', string_crimes_nova_sanitizada)
+
+        patterns = DICT_PATTERN_REGEX["crimes"]
         for pattern in patterns:
-            for item in string_crimes_nova:
+            for item in string_crimes_nova_sanitizada:
                 # print("Analisando trecho:", item)
                 match = re.findall(pattern, item, re.IGNORECASE)
-                # print("Encontrei os trechos:", match, "com o pattern", pattern)
+
+                print("Encontrei os trechos:", match, "com o pattern", pattern)
+
                 if match:
                     result = [x.strip() for x in match]
-
                     # print("Adicionando o seguinte result no listao:", result)
 
                     crimes_encontrados.extend(result)
 
-        # print('aqui aqui CRIMES ENCONTRADOS', crimes_encontrados)
-
-
-
-
-
-                #
-                # print(f"Sucesso: Infração penal '{result}' | REGEX")
-                #
-                # # transforma os crimes em uma lista de crimes
-                # crimes = result.split(';')
-                #
-                # # Usa a função separar_crimes para cada crime
-                # crimes = [self.separar_crimes(crime) for crime in crimes]
-
-                # "Achata" a lista
-                # crimes = [item for sublist in crimes for item in sublist]
-
-                # # retira o elemento da lista vazia gerado pelo split, quando o ; é o último caractere
-                # crimes = [r for r in crimes if r]
-                #
-                # # retira espaços antes e depois
-                # crimes = [r.strip() for r in crimes]
-                #
-                # crimes_encontrados.extend(crimes)
-                # break  # Se uma correspondência foi encontrada, saímos do loop
-
         # Aplica a função de sanitização e converte o resultado para uma lista
-        crimes_sanitizados = list(set(map(self.satitization_crime, crimes_encontrados)))
-
+        crimes_sanitizados = list(set(map(sanitiza_crime2, crimes_encontrados)))
 
         # Armazena o resultado da verificação
         self.infracao_penal = crimes_sanitizados
@@ -295,6 +324,7 @@ class Processo:
         return
 
 
+    # @timer_decorator
     def get_numero_processo(self):
         patterns = DICT_PATTERN_REGEX["numero_processo"]
         for pattern in patterns:
@@ -310,7 +340,6 @@ class Processo:
         self.numero_processo = False
 
 
-
     # @timer_decorator
     def verifica_sentenca(self):
 
@@ -319,7 +348,7 @@ class Processo:
         for pattern in patterns:
             match = re.search(pattern, self.texto, re.IGNORECASE)
             if match:
-                print(f"033[92mSucesso033[0m: Sentença | REGEX")
+                print(f"\033[92mSucesso\033[0m: Sentença | REGEX")
                 self.sentenciado = True  # Armazena o resultado da verificação
                 return  # Se uma correspondência foi encontrada, saímos da função
         # Se nenhuma correspondência foi encontrada para nenhum dos padrões, imprimimos uma mensagem e continuamos com método spacy
@@ -432,6 +461,8 @@ class Processo:
                 date = match.group(1)  # group(1) pega o primeiro grupo capturado, que é a data
                 print(f"\033[92mSucesso\033[0m: Data do crime {date} | Regex")
 
+                date = sanitiza_data_8_digitos(date)
+
                 self.data_do_crime = date
 
                 # atualiza prazo de decadencia
@@ -455,7 +486,7 @@ class Processo:
 
                 # lista de palavras para remover
 
-                result = self.sanitiza_data(span.text)
+                result = sanitiza_data(span.text)
 
 
             print(f"\033[92mSucesso\033[0m: Data do crime {result} | Spacy")
@@ -468,112 +499,9 @@ class Processo:
 
         self.data_do_crime = None  # Armazena o resultado da verificação se nenhuma condição for satisfeita
 
-    def satitization_crime(self, result: str) -> str:
-        # lista de palavras para remover
-        words_to_remove = ["INFRAÇÕES", "PENAIS:",
-                           "CUMPRIMENTO DE MANDADO;",
-                           'BUSCA E APREENSÃO', "DOMICILIAR",
-                           "TESTEMUNHA(S)", "\\\\",
-                           "INFRAÇÚES", "AUTUAÇÃO",
-                           '\"', "CUMPRIMENTO DE MANDADO",
-                           "|", "TESTEMUNHA(S)", ", Autorizando",
-                           " - | TESTEMUNHA(S)", "infração penal: ",
-                           'TESTEMUNHA(S)', "— ", ":",
-                           "\* ", 'ENDIS', 'TRÁFICO DE DROGAS ']
-
-        # remove todas as palavras da lista
-        for word in words_to_remove:
-            result = re.sub(word, '', result)
-
-        # remove com re.sub, com ignorecase
-        crimes_extensos = ['AMEAÇA', 'Lesão corporal dolosa',
-                           'INJÚRIA REAL', '(VIOLÊNCIA CONTRA A MULHER)',
-                           'VIOLÊNCIA CONTRA A MULHER']
-
-        for crime in crimes_extensos:
-            result = re.sub(crime, r'', result, flags=re.IGNORECASE)
-
-        # corrige
-        result = result.replace("CPB", 'CP')
-        result = result.replace("TESTEMUNHA(S)", '')
-        result = result.replace("FENAIS", '')
-        result = result.replace("CPArt.", 'CP, Art.')
-        result = result.replace("ART.", 'Art.')
-        result = result.replace("artigo .", 'Art.')
-        result = result.replace("()", '')
-        result = result.replace('"', '')
-        result = result.replace('|', '')
-        result = result.replace('da', '')
-        result = result.replace('Caput', '')
-        result = result.replace('Lei de Drogas', 'Lei 11.343/2006')
-        result = result.replace('Código Penal', 'CP')
-
-        result = result.strip()
-
-        # retira mais de dois espaços para um espaço
-        result = re.sub(r'\s{2,}', r' ', result)
-
-        # separa art.xxx para Art. XXX
-        result = re.sub(r'Art\.? ?(\d+)', r'Art. \1', result)
-
-        # separa artigo de "do (331do)
-        result = re.sub(r'(\d+)do', r'\1 do', result, flags=re.IGNORECASE)
-
-        # substitui 'do CP'por CP artigo de "do (331do)
-        result = re.sub(r'do (CP)', r', \1', result, flags=re.IGNORECASE)
-
-        # substitui '147 ,' por '147, " (retira espaço entre artigo e virgula)
-        result = re.sub(r'(\d+) ,', r'\1,', result)
-
-        # substitui ', CP ,' ou ', CP,' por ', CP;" (troca a virgula por ; para criar o futuro split)
-        result = re.sub(r', CP ?,?', ', CP;', result)
-
-        # substitui 'CP;Art.', por 'CP; Art.'
-        result = re.sub(r'CP;Art\.', 'CP; Art.', result)
-
-        # substitui Caput , CP por Caput, CP
-        result = re.sub(r'Caput , CP', ', CP', result)
-
-        # substitui '147 ,' por '147, " (retira espaço entre artigo e virgula)
-        result = re.sub(r'(\d+) ,', r'\1,', result)
-
-        # substitui 'C.B' por 'CP'
-        result = re.sub(r'C.B', 'CP', result)
-
-        # substitui a virgula por ponto, na expressao lei
-        result = re.sub(r'(\d{2}),(?=\d{3})', r'\1.', result)
-
-        # acrescenta uma virgula entre artigo da lei e a palavra "lei"
-        result = re.sub(r'(Art.\s\d+)\s(Lei)', r'\1, \2', result)
-
-        # retira espaco entre artigo e virgula, unindo o artigo a virgula
-        result = re.sub(r'(\d+)\s,', r'\1,', result)
-
-        # retira 'do' e, acrescenta uma virgula entre artigo e cp
-        result = re.sub(r'(\d+) ?do ?CP,?', r'\1, CP', result)
-
-        # corrige Decreto-Lei por LCP
-        result = re.sub(r'(.+) do (.)+Lei +3\.68(.)+', r'\1, LCP', result)
-
-        # corrige t. por Art.
-        result = re.sub(r'^t\. ', r'Art. ', result)
-
-        # retira incisos de art. 42 da LCP
-        result = re.sub(r'Art. 42(.+)LCP', r'Art. 42, LCP', result)
-
-        # corrige art. da 11343
-        result = re.sub(r'Art. 33(.{,10})LEI 11.343/2006', r'Art. 33, Lei 11.343/06', result)
-
-        result = re.sub(r'^-\s*(?=[Aa])', '', result)
-
-        result = re.sub(r'^AArt.', 'Art.', result)
-
-        result = re.sub(r'^ss Art.', 'Art.', result)
-
-        result = re.sub(';', '', result)
 
 
-        return result
+
 
     # @timer_decorator
     def verifica_certidao_regex_spacy(self):
@@ -659,56 +587,6 @@ class Processo:
     # @timer_decorator
     def atualiza_natureza_acao(self):
         # Cria dic com crimes e natureza da acao
-        crime_dict = {
-            'Art. 129, CP': 'Pública condicionada à representação',
-            'Art. 129, § 1º, CP': 'Pública condicionada à representação',
-            'Art. 129, § 9º, CP': 'Pública condicionada à representação',
-            'Art. 139, CP': 'Privada',
-            'Art. 140, CP': 'Privada',
-            'Art. 147, CP': 'Pública condicionada à representação',
-            'Art. 148, § único, CP': 'Pública incondicionada',
-            'Art. 150, § 1º, CP': 'Pública condicionada à representação',
-            'Art. 155, § 4º, CP': 'Pública incondicionada',
-            'Art. 155, § 4º, inciso IV, CP': 'Pública incondicionada',
-            'Art. 163, CP': 'Privada',
-            'Art. 163, parágrafo único, inciso I, CP': 'Pública incondicionada',
-            'Art. 168, CP': 'Pública incondicionada',
-            'Art. 171, § 2º, incisos I a VI, CP': 'Pública incondicionada',
-            'Art. 180, CP': 'Pública incondicionada',
-            'Art. 186, CP': 'Privada',
-            'Art. 187, CP': 'Privada',
-            'Art. 189, CP': 'Privada',
-            'Art. 214 c/ Art. 223, CP': 'Pública incondicionada',
-            'Art. 216-A, CP': 'Pública condicionada à representação',
-            'Art. 236, CP': 'Pública incondicionada',
-            'Art. 237, CP': 'Pública incondicionada',
-            'Art. 238, CP': 'Pública incondicionada',
-            'Art. 239, CP': 'Pública incondicionada',
-            'Art. 240, CP': 'Pública incondicionada',
-            'Art. 241, CP': 'Pública incondicionada',
-            'Art. 241-A, CP': 'Pública incondicionada',
-            'Art. 241-B, CP': 'Pública incondicionada',
-            'Art. 241-C, CP': 'Pública incondicionada',
-            'Art. 241-D, CP': 'Pública incondicionada',
-            'Art. 241-E, CP': 'Pública incondicionada',
-            'Art. 243, CP': 'Pública incondicionada',
-            'Art. 244-B, CP': 'Pública incondicionada',
-            'Art. 247, CP': 'Pública incondicionada',
-            'Art. 248, CP': 'Pública incondicionada',
-            'Art. 249, CP': 'Pública incondicionada',
-            'Art. 250, CP': 'Pública incondicionada',
-            'Art. 251, CP': 'Pública incondicionada',
-            'Art. 252, CP': 'Pública incondicionada',
-            'Art. 253, CP': 'Pública incondicionada',
-            'Art. 254, CP': 'Pública incondicionada',
-            'Art. 255, CP': 'Pública incondicionada',
-            'Art. 331, CP': 'Pública incondicionada',
-            'Art. 345, CP': 'Pública incondicionada',
-            'Art. 345, §único, CP': 'Privada',
-            'Art. 28, Lei 11.343/2006': 'Pública incondicionada',
-            'Art. 21, LCP': 'Pública incondicionada',
-            'Art. 42, LCP': 'Pública incondicionada'
-        }
 
         self.natureza_acao = []
 
@@ -719,34 +597,47 @@ class Processo:
 
         # Atualiza self.natureza_acao com base em self.infracao_penal
         for infracao in self.infracao_penal:
-            self.natureza_acao.append(
-                crime_dict.get(infracao, 'Crime não localizado no Dic'))
 
-    def sanitiza_autor(self, palavra):
-        palavra = re.sub(r"AUTOR", "", palavra)
+            if "cp" in infracao:
+                self.natureza_acao.append(
+                    crime_dict_cp.get(infracao, 'Crime não localizado no Dic'))
 
-        # lista de palavras para remover
-        words_to_remove = ["Autor do Fato", "Autor:", "Autor;", ":"]
+            elif "113432006" in infracao:
+                self.natureza_acao.append("Pública incondicionada")
 
-                # remove todas as palavras da lista
-        for word in words_to_remove:
-            palavra = re.sub(word, '', palavra)
+            elif "lcp" in infracao:
+                self.natureza_acao.append("Pública incondicionada")
 
-        palavra = palavra.title().strip()
+            elif "950397" in infracao or "95031997" in infracao:
+                self.natureza_acao.append("Pública incondicionada")
 
-        return palavra
 
-    def sanitiza_data(self, palavra):
+    # def sanitiza_autor(self, palavra):
+    #     palavra = re.sub(r"AUTOR", "", palavra)
+    #
+    #     # lista de palavras para remover
+    #     words_to_remove = ["Autor do Fato", "Autor:", "Autor;", ":"]
+    #
+    #             # remove todas as palavras da lista
+    #     for word in words_to_remove:
+    #         palavra = re.sub(word, '', palavra)
+    #
+    #     palavra = palavra.title().strip()
+    #
+    #     return palavra
 
-        # Expressão regular para encontrar datas no formato dd/dd/dd{2-4}
-        regex = re.compile(r'\b\d{1,2}/\d{1,2}/\d{2,4}\b')
+    # def sanitiza_data(self, palavra):
+    #
+    #     # Expressão regular para encontrar datas no formato dd/dd/dd{2-4}
+    #     regex = re.compile(r'\b\d{1,2}/\d{1,2}/\d{2,4}\b')
+    #
+    #     # Procura pela primeira ocorrência de uma data no texto
+    #     match = regex.search(palavra)
+    #
+    #     # Retorna a data encontrada ou None se nenhuma data for encontrada
+    #     return match.group(0) if match else None
 
-        # Procura pela primeira ocorrência de uma data no texto
-        match = regex.search(palavra)
-
-        # Retorna a data encontrada ou None se nenhuma data for encontrada
-        return match.group(0) if match else None
-
+    # @timer_decorator
     # @timer_decorator
     def verifica_autor_fato(self):
 
@@ -789,13 +680,14 @@ class Processo:
                     maior_nome = len(span.text)
 
 
-            texto_limpo = self.sanitiza_autor(span.text)
+            texto_limpo = sanitiza_autor(span.text)
             self.nome_autor = texto_limpo  # Armazena o resultado da verificação
             return
 
         print("Falhou: Nome do Autor | Spacy")
         return
 
+    # @timer_decorator
     def atualiza_todos_atributos(self):
 
         metodos = [
@@ -822,6 +714,7 @@ class Processo:
 
         self.atualiza_natureza_acao()
 
+    # @timer_decorator
     def retorna_atributos(self):
         atributos = {
             "Número do Processo": [self.numero_processo],
